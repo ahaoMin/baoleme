@@ -1,0 +1,36 @@
+name: Fix deploy path once
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move files to /var/www/baoleme and reload nginx
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+            WRONG='/root/C:/Program Files/Git/var/www/baoleme'
+            RIGHT=/var/www/baoleme
+            mkdir -p "$RIGHT"
+            if [ -d "$WRONG" ]; then
+              find "$RIGHT" -mindepth 1 -delete || true
+              cp -a "$WRONG"/. "$RIGHT"/
+              chown -R www-data:www-data "$RIGHT"
+              echo "moved from wrong path"
+            else
+              echo "wrong path missing, listing candidates:"
+              find /root -name index.html 2>/dev/null | head || true
+            fi
+            ls -la "$RIGHT" | head -30
+            nginx -t
+            systemctl reload nginx
+            curl -sI -H 'Host: a.baoleme.site' http://127.0.0.1/ | head -n 20
+            # unblock sshd if overloaded
+            systemctl restart ssh || systemctl restart sshd || true

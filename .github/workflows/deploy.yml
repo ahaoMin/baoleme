@@ -30,7 +30,9 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          source: "dist/*"
-          target: ${{ secrets.DEPLOY_PATH }}
+          # 固定 Linux 路径，避免 Windows/Git Bash 把 /var/... 改写成 C:/Program Files/Git/...
+          source: "dist/"
+          target: "/var/www/baoleme"
           strip_components: 1
           overwrite: true
+          rm: true
