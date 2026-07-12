@@ -1,0 +1,15 @@
+node_modules
+dist
+.DS_Store
+*.local
+public/.img-cache
+*.tsbuildinfo
+
+# Legacy bulky gif pack (site uses 猫meme/ only)
+/猫meme 动态表情包 150张/
+
+# deploy secrets — never commit private keys
+deploy/keys/
+*.pem
+baoleme-deploy
+baoleme-deploy.pub
