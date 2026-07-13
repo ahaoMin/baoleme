@@ -1,4 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
+import MallShippingPage from '@/pages/MallShippingPage.vue';
+import MallUnboxPage from '@/pages/MallUnboxPage.vue';
+import TrackingPage from '@/pages/TrackingPage.vue';
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -11,7 +14,7 @@ const router = createRouter({
     { path: '/product/:restId/:dishId', name: 'product', component: () => import('@/pages/ProductDetailPage.vue'), meta: { showTab: false } },
     { path: '/cart', name: 'cart', component: () => import('@/pages/CartPage.vue'), meta: { tab: 1, showTab: true } },
     { path: '/checkout', name: 'checkout', component: () => import('@/pages/CheckoutPage.vue'), meta: { showTab: false } },
-    { path: '/tracking/:orderNo', name: 'tracking', component: () => import('@/pages/TrackingPage.vue'), meta: { showTab: false } },
+    { path: '/tracking/:orderNo', name: 'tracking', component: TrackingPage, meta: { showTab: false } },
     { path: '/done/:orderNo', name: 'done', component: () => import('@/pages/DonePage.vue'), meta: { showTab: false } },
     { path: '/orders', name: 'orders', component: () => import('@/pages/OrdersPage.vue'), meta: { tab: 2, showTab: true } },
     { path: '/order/:orderNo', name: 'order-detail', component: () => import('@/pages/OrderDetailPage.vue'), meta: { showTab: false } },
@@ -23,8 +26,8 @@ const router = createRouter({
     { path: '/ticket-rush', name: 'ticket-rush', component: () => import('@/pages/TicketRushPage.vue'), meta: { showTab: false } },
     { path: '/movie-seat/:restId/:dishId', name: 'movie-seat', component: () => import('@/pages/MovieSeatPage.vue'), meta: { showTab: false } },
     { path: '/stats', name: 'stats', component: () => import('@/pages/StatsPage.vue'), meta: { showTab: false } },
-    { path: '/mall-shipping/:orderNo', name: 'mall-shipping', component: () => import('@/pages/MallShippingPage.vue'), meta: { showTab: false } },
-    { path: '/mall-unbox/:orderNo', name: 'mall-unbox', component: () => import('@/pages/MallUnboxPage.vue'), meta: { showTab: false } },
+    { path: '/mall-shipping/:orderNo', name: 'mall-shipping', component: MallShippingPage, meta: { showTab: false } },
+    { path: '/mall-unbox/:orderNo', name: 'mall-unbox', component: MallUnboxPage, meta: { showTab: false } },
   ],
 });
 

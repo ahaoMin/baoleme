@@ -87,6 +87,7 @@ const mallGroups = computed(() => (type.value === 'mall' ? cart.getMallCartGroup
 const checkoutTitle = computed(() => {
   if (type.value === 'mall') {
     const groups = mallGroups.value;
+    if (groups.length === 0) return '🛍️ 商城订单';
     return groups.length === 1 ? `${groups[0].store.emoji} ${groups[0].store.name}` : `🛍️ ${groups.length}家店铺`;
   }
   const ctx = cart.contexts[type.value] as SingleStoreCartContext;
@@ -98,7 +99,31 @@ function selectCoupon(id: string) {
   cart.selectCoupon(id);
 }
 
+/** 下单后离开确认页；部分手机 WebView 对异步 router.replace 会静默失败 */
+function leaveCheckout(path: string, query?: Record<string, string>) {
+  const q = query
+    ? `?${Object.entries(query).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&')}`
+    : '';
+  const hash = `#${path}${q}`;
+
+  void router.replace(query ? { path, query } : path).catch(() => {
+    window.location.hash = hash;
+  });
+
+  // 仍停在确认页时强制改 hash（微信内置浏览器常见）
+  window.setTimeout(() => {
+    if (router.currentRoute.value.path === '/checkout') {
+      window.location.hash = hash;
+    }
+  }, 50);
+}
+
 function requestPlaceOrder() {
+  if (type.value === 'mall' && mallGroups.value.length === 0) {
+    ui.toast('购物车是空的，回去再选一件吧');
+    router.replace('/home?cat=mall');
+    return;
+  }
   if (type.value !== 'leisure') {
     ensureDefaultAddresses();
     if (!getActiveAddress()) {
@@ -133,31 +158,26 @@ function placeOrder() {
   };
   ui.toast(payMsgs[payMethod.value] || '支付成功！（当然，一分钱都没扣）');
 
-  setTimeout(() => {
-    try {
-      if (orderType === 'leisure') {
-        const willShareTicket = fromTicketRush.value || fromMovieSeat.value || !!cart.pendingTicketPass;
-        const orderNo = delivery.placeOrder('leisure');
-        if (orderNo) {
-          router.replace(willShareTicket
-            ? { path: `/order/${orderNo}`, query: { share: '1' } }
-            : `/order/${orderNo}`);
-        } else {
-          router.replace('/orders');
-        }
-      } else if (orderType === 'mall') {
-        const orderNo = delivery.placeOrder('mall');
-        if (orderNo) router.replace(`/mall-shipping/${orderNo}`);
-        else router.replace('/orders');
+  // 同步下单并跳转：不要 setTimeout，避免手机 WebView 里定时器路由失败
+  try {
+    if (orderType === 'leisure') {
+      const willShareTicket = fromTicketRush.value || fromMovieSeat.value || !!cart.pendingTicketPass;
+      const orderNo = delivery.placeOrder('leisure');
+      if (orderNo) {
+        leaveCheckout(`/order/${orderNo}`, willShareTicket ? { share: '1' } : undefined);
       } else {
-        const orderNo = delivery.placeOrder('delivery', schedule);
-        if (orderNo) router.replace(`/tracking/${orderNo}`);
-        else router.replace('/orders');
+        leaveCheckout('/orders');
       }
-    } finally {
-      placing.value = false;
+    } else if (orderType === 'mall') {
+      const orderNo = delivery.placeOrder('mall');
+      leaveCheckout(orderNo ? `/mall-shipping/${orderNo}` : '/orders');
+    } else {
+      const orderNo = delivery.placeOrder('delivery', schedule);
+      leaveCheckout(orderNo ? `/tracking/${orderNo}` : '/orders');
     }
-  }, 400);
+  } finally {
+    placing.value = false;
+  }
 }
 
 function back() {
