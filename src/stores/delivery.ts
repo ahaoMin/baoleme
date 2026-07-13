@@ -295,7 +295,10 @@ export const useDeliveryStore = defineStore('delivery', () => {
     if (orderNos.length > 1) {
       ui.toast(`📦 已拆成 ${orderNos.length} 个包裹，分别发货～`);
     } else {
-      ui.toast('📦 商城订单已发货，预计 1~3 天送达');
+      const mins = Math.max(1, Math.round(randomMallShipDurationMs() / 60000));
+      ui.toast(mins < 60
+        ? `📦 商城订单已发货，约 ${mins} 分钟送达（测试）`
+        : '📦 商城订单已发货，预计 1~3 天送达');
     }
     return orderNos[0];
   }

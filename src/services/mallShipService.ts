@@ -170,17 +170,20 @@ export function normalizeShipState(orderNo: string, state: MallShipState): MallS
   return upgradeShortMallShip(next);
 }
 
-/** 总时长不足半天的旧物流 → 按进度映射到 1~3 天 */
+/** 总时长不足半天的旧测试物流 → 仅在正式「天级」时长时，按进度映射上去 */
 export function upgradeShortMallShip(state: MallShipState): MallShipState {
-  const total = state.endTime - state.startTime;
+  const target = randomMallShipDurationMs();
   const halfDay = 12 * 60 * 60 * 1000;
+  // 当前就是测试短时长（如 3 分钟）时不要乱改
+  if (target < halfDay) return state;
+
+  const total = state.endTime - state.startTime;
   if (!(total > 0) || total >= halfDay) return state;
 
   const now = Date.now();
   const pct = Math.min(1, Math.max(0, (now - state.startTime) / total));
-  const newTotal = randomMallShipDurationMs();
-  const endTime = now + Math.round((1 - pct) * newTotal);
-  const startTime = endTime - newTotal;
+  const endTime = now + Math.round((1 - pct) * target);
+  const startTime = endTime - target;
   return { ...state, startTime, endTime };
 }
 
