@@ -12,12 +12,14 @@ import { isCinemaStore } from '@/services/movieSeatService';
 import { formatReviewTime, getReviewCopy } from '@/services/reviewService';
 import { resolveTicketPass } from '@/services/ticketRushService';
 import { useCartStore } from '@/stores/cart';
+import { useDeliveryStore } from '@/stores/delivery';
 import { useOrderStore } from '@/stores/order';
 import { useUiStore } from '@/stores/ui';
 
 const route = useRoute();
 const router = useRouter();
 const cart = useCartStore();
+const delivery = useDeliveryStore();
 const orderStore = useOrderStore();
 const ui = useUiStore();
 
@@ -25,6 +27,11 @@ const order = computed(() => {
   orderStore.orders;
   const key = String(route.params.orderNo || '');
   return findOrder(getOrders(), key);
+});
+
+const mallLiveEntry = computed(() => {
+  if (!order.value || order.value.orderType !== 'mall') return null;
+  return delivery.findMallEntry(order.value.orderNo);
 });
 
 const ticketPass = computed(() => (order.value ? resolveTicketPass(order.value) : null));
@@ -70,6 +77,12 @@ const statusCard = computed(() => {
     return isMoviePass.value
       ? { title: '🎬 出票成功 · 待观影', sub: '电影票已出，选好的座位在脑内影厅为你留着' }
       : { title: '🎤 出票成功 · 待观演', sub: '电子票根已生成，入场时向检票员展示（脑内检票也通）' };
+  }
+  if (type === 'mall' && mallLiveEntry.value) {
+    if (mallLiveEntry.value.order.pendingUnbox) {
+      return { title: '📦 包裹已送达', sub: '点击下方按钮去开箱签收（实物依然不会出现）' };
+    }
+    return { title: '🚚 运输中', sub: '包裹正在赶来的路上，点下方可查看物流进度' };
   }
   const cards: Record<string, { title: string; sub: string }> = {
     delivery: { title: '✅ 已送达', sub: '外卖已送达你的精神世界，胃没有收到任何东西' },
@@ -125,6 +138,18 @@ function qrImgUrl(text: string) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(text)}`;
 }
 
+function goMallLive() {
+  if (!order.value) return;
+  const entry = delivery.findMallEntry(order.value.orderNo);
+  if (!entry) {
+    ui.toast('物流已结束，去订单列表看看');
+    router.push('/orders');
+    return;
+  }
+  if (entry.order.pendingUnbox) router.push(`/mall-unbox/${order.value.orderNo}`);
+  else router.push(`/mall-shipping/${order.value.orderNo}`);
+}
+
 function goStore(restId?: string | null) {
   const id = restId || order.value?.restId;
   if (id) router.push(`/store/${id}`);
@@ -158,6 +183,12 @@ function openReview() {
       <div class="card od-status-card">
         <div class="od-status-title">{{ statusCard.title }}</div>
         <div class="od-status-sub">{{ statusCard.sub }}</div>
+        <button
+          v-if="mallLiveEntry"
+          class="od-track-btn"
+          type="button"
+          @click="goMallLive"
+        >{{ mallLiveEntry.order.pendingUnbox ? '去开箱签收 ›' : '查看物流进度 ›' }}</button>
       </div>
 
       <div v-if="ticketPass" class="concert-pass-wrap">

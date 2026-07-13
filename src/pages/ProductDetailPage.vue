@@ -58,10 +58,10 @@ function addToCart() {
 
 function buyNow() {
   if (!store.value || !dish.value) return;
+  // 立即购买只结算当前商品，避免购物车里其他店铺被一起拆单
+  cart.clearByType('mall');
   cart.openStore(restId.value);
-  if (cart.getCount(dishId.value, 'mall', restId.value) === 0) {
-    cart.changeCount(dishId.value, 1, { type: 'mall', restId: restId.value });
-  }
+  cart.changeCount(dishId.value, 1, { type: 'mall', restId: restId.value });
   cart.panelOpen = false;
   if (cart.prepareCheckout('mall')) router.push('/checkout');
 }

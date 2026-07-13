@@ -142,8 +142,8 @@ function placeOrder() {
         }
       } else if (type.value === 'mall') {
         const orderNo = delivery.placeOrder('mall');
-        if (orderNo) router.push(`/mall-shipping/${orderNo}`);
-        else router.push('/orders');
+        if (orderNo) router.replace(`/mall-shipping/${orderNo}`);
+        else router.replace('/orders');
       } else {
         const schedule = isDeliveryCheckout.value
           ? buildCheckoutSchedule(deliveryMode.value, scheduledLocal.value)

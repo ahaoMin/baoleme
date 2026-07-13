@@ -96,7 +96,8 @@ const topActiveCards = computed((): ActiveCard[] => {
       return;
     }
     const progress = getMallShipProgress(entry);
-    if (!progress || progress.done) return;
+    if (!progress) return;
+    // 即使进度到 100%，在标记待开箱前仍保留入口，避免点不进去
     cards.push({
       key: `m-${entry.order.orderNo}`,
       kind: 'mall-ship',
@@ -167,7 +168,22 @@ function goMallShipping(orderNo: string) {
 }
 
 function goOrderDetail(orderNo: string) {
+  const entry = delivery.findMallEntry(orderNo);
+  if (entry) {
+    goMallShipping(orderNo);
+    return;
+  }
   router.push(`/order/${orderNo}`);
+}
+
+function openActiveGroup(group: ActiveGroup) {
+  if (group.cards.length === 1) {
+    openActiveCard(group.cards[0]);
+    return;
+  }
+  // 多包裹：点标题进第一单进度，同时展开列表方便切换
+  if (!isExpanded(group.key)) toggleGroup(group.key);
+  openActiveCard(group.cards[0]);
 }
 
 function openActiveCard(card: ActiveCard) {
@@ -337,7 +353,7 @@ function handleScan() {
         </div>
 
         <template v-else>
-          <div :class="activeGroupWrapClass(group)" @click="toggleGroup(group.key)">
+          <div :class="activeGroupWrapClass(group)" @click="openActiveGroup(group)">
             <div class="order-item">
               <div class="order-emoji">{{ group.emoji }}</div>
               <div class="order-info">
