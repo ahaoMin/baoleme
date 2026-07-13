@@ -28,7 +28,7 @@ export const CART_HOME_CATEGORY: Record<string, string> = {
 export const PACKING_FEE = 2;
 
 /** 分享文案里的站点链接（固定线上域名，避免本地/预览地址泄漏） */
-export const SITE_URL = 'http://a.baoleme.site';
+export const SITE_URL = 'https://a.baoleme.site';
 
 /** 功能开关：先藏界面，逻辑保留，改 true 即可恢复 */
 export const FEATURE_FLAGS = {
