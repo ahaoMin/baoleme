@@ -99,23 +99,15 @@ function selectCoupon(id: string) {
   cart.selectCoupon(id);
 }
 
-/** 下单后离开确认页；部分手机 WebView 对异步 router.replace 会静默失败 */
+/** 下单后离开确认页；hash 路由直接改地址最稳 */
 function leaveCheckout(path: string, query?: Record<string, string>) {
-  const q = query
-    ? `?${Object.entries(query).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&')}`
-    : '';
+  const q = query ? `?${new URLSearchParams(query).toString()}` : '';
   const hash = `#${path}${q}`;
-
-  void router.replace(query ? { path, query } : path).catch(() => {
-    window.location.hash = hash;
-  });
-
-  // 仍停在确认页时强制改 hash（微信内置浏览器常见）
-  window.setTimeout(() => {
-    if (router.currentRoute.value.path === '/checkout') {
-      window.location.hash = hash;
-    }
-  }, 50);
+  if (window.location.hash === hash) {
+    void router.replace(query ? { path, query } : path);
+    return;
+  }
+  window.location.hash = hash;
 }
 
 function requestPlaceOrder() {

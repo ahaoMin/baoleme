@@ -506,12 +506,22 @@ export const useDeliveryStore = defineStore('delivery', () => {
   }
 
   function findMallEntry(orderNo: string) {
-    const entry = activeMallShipments.value.find((e) => e.order.orderNo === orderNo) || null;
-    if (entry?.shipState) {
-      const before = entry.shipState.endTime - entry.shipState.startTime;
-      entry.shipState = normalizeShipState(orderNo, entry.shipState);
-      const after = entry.shipState.endTime - entry.shipState.startTime;
-      if (after !== before) saveMallShipments();
+    // 只读查找：禁止在 computed 调用链里改写 shipState，否则会触发无限重渲染卡死
+    return activeMallShipments.value.find((e) => e.order.orderNo === orderNo) || null;
+  }
+
+  function ensureMallShipNormalized(orderNo: string) {
+    const entry = findMallEntry(orderNo);
+    if (!entry?.shipState) return entry;
+    const prev = entry.shipState;
+    const next = normalizeShipState(orderNo, prev);
+    const changed = next.startTime !== prev.startTime
+      || next.endTime !== prev.endTime
+      || !prev.mascot
+      || !prev.routeCities?.length;
+    if (changed) {
+      entry.shipState = next;
+      saveMallShipments();
     }
     return entry;
   }
@@ -542,5 +552,6 @@ export const useDeliveryStore = defineStore('delivery', () => {
     mallInteract,
     processOverdueShipments,
     findMallEntry,
+    ensureMallShipNormalized,
   };
 });

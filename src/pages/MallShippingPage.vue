@@ -35,6 +35,7 @@ function redirectIfUnbox() {
 }
 
 onMounted(() => {
+  delivery.ensureMallShipNormalized(orderNo.value);
   delivery.viewingMallOrderNo = orderNo.value;
   if (redirectIfUnbox()) return;
   const { achievement, showEasterEgg } = delivery.recordMallShippingView(orderNo.value);
