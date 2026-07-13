@@ -121,6 +121,11 @@ function requestPlaceOrder() {
 function placeOrder() {
   if (placing.value) return;
   placing.value = true;
+  // 下单类型在点击时锁定，避免清空购物车后 type 变化走错分支
+  const orderType = type.value;
+  const schedule = orderType === 'delivery'
+    ? buildCheckoutSchedule(deliveryMode.value, scheduledLocal.value)
+    : undefined;
   const payMsgs: Record<string, string> = {
     baole: '饱了么支付成功！余额 ∞ 纹丝不动',
     wechat: '微信支付成功！微信：你谁？',
@@ -130,27 +135,24 @@ function placeOrder() {
 
   setTimeout(() => {
     try {
-      if (type.value === 'leisure') {
+      if (orderType === 'leisure') {
         const willShareTicket = fromTicketRush.value || fromMovieSeat.value || !!cart.pendingTicketPass;
         const orderNo = delivery.placeOrder('leisure');
         if (orderNo) {
-          router.push(willShareTicket
+          router.replace(willShareTicket
             ? { path: `/order/${orderNo}`, query: { share: '1' } }
             : `/order/${orderNo}`);
         } else {
-          router.push('/orders');
+          router.replace('/orders');
         }
-      } else if (type.value === 'mall') {
+      } else if (orderType === 'mall') {
         const orderNo = delivery.placeOrder('mall');
         if (orderNo) router.replace(`/mall-shipping/${orderNo}`);
         else router.replace('/orders');
       } else {
-        const schedule = isDeliveryCheckout.value
-          ? buildCheckoutSchedule(deliveryMode.value, scheduledLocal.value)
-          : undefined;
         const orderNo = delivery.placeOrder('delivery', schedule);
-        if (orderNo) router.push(`/tracking/${orderNo}`);
-        else router.push('/orders');
+        if (orderNo) router.replace(`/tracking/${orderNo}`);
+        else router.replace('/orders');
       }
     } finally {
       placing.value = false;
@@ -314,7 +316,7 @@ function back() {
 
     <div class="checkout-footer">
       <div class="checkout-footer-total">实付 <b>¥{{ formatMoney(nums.pay) }}</b></div>
-      <button class="pay-btn" :disabled="placing" @click="requestPlaceOrder">
+      <button class="pay-btn" type="button" :disabled="placing" @click="requestPlaceOrder">
         {{ fromTicketRush ? '立即支付出票' : (placing ? '提交中…' : '提交订单') }}
       </button>
     </div>

@@ -197,9 +197,8 @@ export const useCartStore = defineStore('cart', () => {
       currentRestaurant.value = null;
       cartType.value = pickActiveCartType();
     }
-    if (checkoutCartType.value === type) {
-      checkoutCartType.value = pickActiveCartType();
-    }
+    // 不在清空时改 checkoutCartType：下单瞬间若切到别的购物车，
+    // 确认页会闪成「又一份提交订单」（例如商城单清完后露出残留外卖车）
     persist();
   }
 
