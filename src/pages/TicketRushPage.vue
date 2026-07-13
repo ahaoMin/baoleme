@@ -4,13 +4,16 @@ import { useRouter } from 'vue-router';
 import { formatMoney } from '@/core/money';
 import {
   CONGEST_LINES,
+  clearTicketRushGrabbed,
   formatCountdown,
+  formatCountdownLabel,
+  formatItemSaleHint,
+  formatNextSaleHint,
   formatQueue,
   getSeatTiers,
   getTicketRushList,
   isTicketRushGrabbed,
   markTicketRushGrabbed,
-  resetSaleCountdowns,
   rollTicketRushSuccess,
   type CountdownParts,
   type ResolvedTicketRush,
@@ -26,7 +29,8 @@ const ui = useUiStore();
 const userStore = useUserStore();
 
 const now = ref(Date.now());
-const list = ref(getTicketRushList());
+const list = ref(getTicketRushList(now.value));
+const saleHint = ref(formatNextSaleHint(now.value));
 const selectedId = ref<string | null>(null);
 const selectedSeatId = ref<string | null>(null);
 const qty = ref(1);
@@ -41,6 +45,7 @@ const queuePct = ref(0);
 
 let tickTimer: ReturnType<typeof setInterval> | null = null;
 let queueTimer: ReturnType<typeof setInterval> | null = null;
+let lastSaleSignature = '';
 
 const selected = computed(() => list.value.find((x) => x.id === selectedId.value) || null);
 
@@ -51,27 +56,35 @@ const selectedSeat = computed(() => seatTiers.value.find((s) => s.id === selecte
 const unitPrice = computed(() => selectedSeat.value?.price ?? selected.value?.rushPrice ?? 0);
 
 const selectedCountdown = computed<CountdownParts>(() => {
-  if (!selected.value) return formatCountdown(0);
+  if (!selected.value || selected.value.onSale) return formatCountdown(0);
   return formatCountdown(selected.value.saleAt - now.value);
 });
 
-const selectedOnSale = computed(() => selectedCountdown.value.done);
+const selectedOnSale = computed(() => !!selected.value?.onSale);
+
+function saleSignature(items: ResolvedTicketRush[]) {
+  return items.map((x) => `${x.id}:${x.onSale ? 1 : 0}:${x.saleAt}`).join('|');
+}
+
+function refreshList() {
+  list.value = getTicketRushList(now.value);
+  saleHint.value = formatNextSaleHint(now.value);
+  lastSaleSignature = saleSignature(list.value);
+}
 
 function itemCountdown(item: ResolvedTicketRush): CountdownParts {
+  if (item.onSale) return formatCountdown(0);
   return formatCountdown(item.saleAt - now.value);
 }
 
 function isOnSale(item: ResolvedTicketRush) {
-  return itemCountdown(item).done;
+  return item.onSale;
 }
 
 function ctaLabel(item: ResolvedTicketRush) {
   if (item.soldOut) return '已售罄';
   if (isTicketRushGrabbed(item.id)) return '已抢到';
-  if (!isOnSale(item)) {
-    const c = itemCountdown(item);
-    return `${c.minutes}:${c.seconds}.${c.ms}`;
-  }
+  if (!isOnSale(item)) return formatCountdownLabel(itemCountdown(item));
   return '选座抢票';
 }
 
@@ -212,10 +225,9 @@ function closeOverlay() {
 }
 
 function replayCountdowns() {
-  resetSaleCountdowns();
-  list.value = getTicketRushList();
-  now.value = Date.now();
-  ui.toast('已重置开售倒计时，重新候场～');
+  clearTicketRushGrabbed();
+  refreshList();
+  ui.toast(`已清空已抢记录 · ${formatNextSaleHint()}`);
 }
 
 watch(selectedId, () => {
@@ -223,9 +235,21 @@ watch(selectedId, () => {
 });
 
 onMounted(() => {
+  refreshList();
   tickTimer = setInterval(() => {
     now.value = Date.now();
-  }, 50);
+    const nextList = getTicketRushList(now.value);
+    const nextSig = saleSignature(nextList);
+    if (nextSig !== lastSaleSignature) {
+      const prevOnSaleIds = new Set(list.value.filter((x) => x.onSale).map((x) => x.id));
+      list.value = nextList;
+      lastSaleSignature = nextSig;
+      const opened = nextList.filter((x) => x.onSale && !prevOnSaleIds.has(x.id));
+      if (opened.length === 1) ui.toast(`${opened[0].artist} 开售了！快去抢 🎫`);
+      else if (opened.length > 1) ui.toast(`${opened.length} 场开售了！快去抢 🎫`);
+    }
+    saleHint.value = formatNextSaleHint(now.value);
+  }, 250);
 });
 
 onBeforeUnmount(() => {
@@ -239,14 +263,14 @@ onBeforeUnmount(() => {
     <header class="simple-header ticket-rush-header">
       <button class="back-btn" type="button" @click="selected ? backToList() : router.push('/home?cat=leisure')">‹</button>
       <span>{{ selected ? '确认购票' : '抢了么' }}</span>
-      <button v-if="!selected" class="ticket-rush-reset" type="button" @click="replayCountdowns">重置</button>
+      <button v-if="!selected" class="ticket-rush-reset" type="button" @click="replayCountdowns">清空</button>
     </header>
 
     <!-- 列表：候场 / 开售 -->
     <template v-if="!selected">
       <div class="ticket-rush-banner">
-        <div class="ticket-rush-banner-title">大麦风 · 倒计时候场</div>
-        <div class="ticket-rush-banner-sub">开售前别狂刷，倒计时归零后点「立即购买」</div>
+        <div class="ticket-rush-banner-title">十场错开 · 每天 10:00–20:00</div>
+        <div class="ticket-rush-banner-sub">{{ saleHint }} · 每场开售约 30 分钟</div>
       </div>
 
       <div class="ticket-rush-body">
@@ -265,7 +289,7 @@ onBeforeUnmount(() => {
                 <span v-if="item.hot" class="ticket-rush-hot">HOT</span>
               </div>
               <div class="ticket-rush-title">{{ item.title }}</div>
-              <div class="ticket-rush-meta">{{ item.city }} · {{ item.showTime }}</div>
+              <div class="ticket-rush-meta">{{ item.city }} · {{ item.showTime }} · 开售 {{ String(item.saleHour).padStart(2, '0') }}:00</div>
             </div>
           </div>
 
@@ -273,9 +297,14 @@ onBeforeUnmount(() => {
             <template v-if="!isOnSale(item) && !isTicketRushGrabbed(item.id) && !item.soldOut">
               <span class="damai-count-label">距开售</span>
               <div class="damai-count-blocks">
+                <template v-if="itemCountdown(item).hours !== '00'">
+                  <b>{{ itemCountdown(item).hours }}</b><i>:</i>
+                </template>
                 <b>{{ itemCountdown(item).minutes }}</b><i>:</i>
-                <b>{{ itemCountdown(item).seconds }}</b><i>.</i>
-                <b class="ms">{{ itemCountdown(item).ms }}</b>
+                <b>{{ itemCountdown(item).seconds }}</b>
+                <template v-if="itemCountdown(item).hours === '00'">
+                  <i>.</i><b class="ms">{{ itemCountdown(item).ms }}</b>
+                </template>
               </div>
             </template>
             <template v-else-if="isTicketRushGrabbed(item.id)">
@@ -365,8 +394,13 @@ onBeforeUnmount(() => {
 
         <div v-if="!selectedOnSale" class="damai-wait-card">
           <div class="damai-wait-title">即将开抢，请候场</div>
-          <div class="damai-wait-tip">先选好座位区，倒计时结束后再抢</div>
+          <div class="damai-wait-tip">{{ formatItemSaleHint(selected, now) }} · 先选好座位区</div>
           <div class="damai-big-count">
+            <div v-if="selectedCountdown.hours !== '00'" class="damai-big-block">
+              <b>{{ selectedCountdown.hours }}</b>
+              <span>时</span>
+            </div>
+            <i v-if="selectedCountdown.hours !== '00'">:</i>
             <div class="damai-big-block">
               <b>{{ selectedCountdown.minutes }}</b>
               <span>分</span>
@@ -376,11 +410,13 @@ onBeforeUnmount(() => {
               <b>{{ selectedCountdown.seconds }}</b>
               <span>秒</span>
             </div>
-            <i>.</i>
-            <div class="damai-big-block ms">
-              <b>{{ selectedCountdown.ms }}</b>
-              <span>毫秒</span>
-            </div>
+            <template v-if="selectedCountdown.hours === '00'">
+              <i>.</i>
+              <div class="damai-big-block ms">
+                <b>{{ selectedCountdown.ms }}</b>
+                <span>毫秒</span>
+              </div>
+            </template>
           </div>
         </div>
         <div v-else class="damai-wait-card sale">
@@ -404,7 +440,7 @@ onBeforeUnmount(() => {
           <template v-if="isTicketRushGrabbed(selected.id)">已抢到</template>
           <template v-else-if="selected.soldOut">已售罄</template>
           <template v-else-if="!selectedOnSale">
-            {{ selectedCountdown.minutes }}:{{ selectedCountdown.seconds }}.{{ selectedCountdown.ms }}
+            {{ formatCountdownLabel(selectedCountdown) }}
           </template>
           <template v-else>立即购买</template>
         </button>

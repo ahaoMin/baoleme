@@ -38,6 +38,8 @@ export declare const TICKET_RUSH: Array<{
   hot?: boolean;
   successRate: number;
   soldOut?: boolean;
+  /** 每天本地开售整点（10–20） */
+  saleHour?: number;
   countdownSec?: number;
 }>;
 import type { CouponDef, SignInReward } from '@/domain/types';

@@ -1420,77 +1420,77 @@ const DAILY_SPECIALS = [
   { restId: 'r2', dishId: 'r2d2', specialPrice: 19.9, sold: 980 },
 ];
 
-// 抢了么 · 国内热门歌手最新巡演抢票（countdownSec：进入页面后倒计时秒数，0=已开售）
+// 抢了么 · 国内热门歌手最新巡演抢票（saleHour：每天本地开售整点，10–20 错开）
 const TICKET_RUSH = [
   {
     id: 'tr1', restId: 'l4', dishId: 'l4c1',
     artist: '周杰伦', title: '「嘉年华Ⅱ」世界巡回演唱会',
     venue: '杭州奥体中心体育场（脑内场）', showTime: '周六 19:30',
     emoji: '🎹', rushPrice: 1280, seat: '内场A区', city: '杭州',
-    queue: 2180000, grabbedPct: 99, hot: true, successRate: 0.12, countdownSec: 45,
+    queue: 2180000, grabbedPct: 99, hot: true, successRate: 0.12, saleHour: 10,
   },
   {
     id: 'tr2', restId: 'l4', dishId: 'l4c2',
     artist: '林俊杰', title: '「JJ20 FINAL LAP」世界巡回演唱会',
     venue: '北京国家体育场鸟巢（幻想看台）', showTime: '周日 19:00',
     emoji: '🎤', rushPrice: 980, seat: '看台B区', city: '北京',
-    queue: 1560000, grabbedPct: 97, hot: true, successRate: 0.18, countdownSec: 38,
+    queue: 1560000, grabbedPct: 97, hot: true, successRate: 0.18, saleHour: 11,
   },
   {
     id: 'tr3', restId: 'l4', dishId: 'l4c3',
     artist: '薛之谦', title: '「万兽之王」巡回演唱会',
     venue: '青岛市民健身中心体育场（精神内场）', showTime: '周六 19:30',
     emoji: '🎙️', rushPrice: 880, seat: '内场C区', city: '青岛',
-    queue: 980000, grabbedPct: 94, hot: true, successRate: 0.22, countdownSec: 32,
+    queue: 980000, grabbedPct: 94, hot: true, successRate: 0.22, saleHour: 12,
   },
   {
     id: 'tr4', restId: 'l4', dishId: 'l4c4',
     artist: '张杰', title: '「未·LIVE—开往1982」世界巡回演唱会',
     venue: '北京国家体育场鸟巢（脑内主场）', showTime: '周五 19:00',
     emoji: '🏟️', rushPrice: 780, seat: '看台A区', city: '北京',
-    queue: 1320000, grabbedPct: 96, hot: true, successRate: 0.2, countdownSec: 28,
+    queue: 1320000, grabbedPct: 96, hot: true, successRate: 0.2, saleHour: 13,
   },
   {
     id: 'tr5', restId: 'l4', dishId: 'l4c5',
     artist: '邓紫棋', title: '「I AM GLORIA」世界巡回演唱会',
     venue: '广州宝能广州国际体育演艺中心', showTime: '周六 20:00',
     emoji: '💎', rushPrice: 680, seat: '看台C区', city: '广州',
-    queue: 860000, grabbedPct: 91, hot: true, successRate: 0.28, countdownSec: 25,
+    queue: 860000, grabbedPct: 91, hot: true, successRate: 0.28, saleHour: 14,
   },
   {
     id: 'tr6', restId: 'l4', dishId: 'l4c6',
     artist: '汪苏泷', title: '「明日世界」世界巡回演唱会',
     venue: '南京青奥体育公园体育馆', showTime: '周日 19:00',
     emoji: '⚡', rushPrice: 720, seat: '内场B区', city: '南京',
-    queue: 720000, grabbedPct: 89, hot: true, successRate: 0.32, countdownSec: 22,
+    queue: 720000, grabbedPct: 89, hot: true, successRate: 0.32, saleHour: 15,
   },
   {
     id: 'tr7', restId: 'l4', dishId: 'l4c7',
     artist: '周深', title: '「深深的」巡回演唱会',
     venue: '苏州体育中心体育馆', showTime: '周六 19:30',
     emoji: '🌊', rushPrice: 650, seat: '看台D区', city: '苏州',
-    queue: 640000, grabbedPct: 87, hot: false, successRate: 0.36, countdownSec: 18,
+    queue: 640000, grabbedPct: 87, hot: false, successRate: 0.36, saleHour: 16,
   },
   {
     id: 'tr8', restId: 'l4', dishId: 'l4c8',
     artist: '华晨宇', title: '火星演唱会',
     venue: '海口五源河体育场（脑内火星）', showTime: '周六 20:00',
     emoji: '🚀', rushPrice: 860, seat: '内场A区', city: '海口',
-    queue: 910000, grabbedPct: 93, hot: true, successRate: 0.24, countdownSec: 40,
+    queue: 910000, grabbedPct: 93, hot: true, successRate: 0.24, saleHour: 17,
   },
   {
     id: 'tr9', restId: 'l4', dishId: 'l4c9',
     artist: '李荣浩', title: '「纵横四海」世界巡回演唱会',
     venue: '杭州奥体中心体育馆', showTime: '周日 19:30',
     emoji: '🎸', rushPrice: 580, seat: '看台B区', city: '杭州',
-    queue: 420000, grabbedPct: 78, hot: false, successRate: 0.48, countdownSec: 0,
+    queue: 420000, grabbedPct: 78, hot: false, successRate: 0.48, saleHour: 18,
   },
   {
     id: 'tr10', restId: 'l4', dishId: 'l4c10',
     artist: '五月天', title: '「#5525+2 回到那一天」25周年巡回演唱会',
     venue: '北京国家体育场鸟巢（脑内场）', showTime: '周六 19:00',
     emoji: '🔥', rushPrice: 980, seat: '看台A区', city: '北京',
-    queue: 1890000, grabbedPct: 98, hot: true, successRate: 0.15, countdownSec: 50,
+    queue: 1890000, grabbedPct: 98, hot: true, successRate: 0.15, saleHour: 20,
   },
 ];
 
