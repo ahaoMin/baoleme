@@ -1726,20 +1726,20 @@ button { border: none; cursor: pointer; font-family: inherit; }
 }
 
 .support-card {
-  background: linear-gradient(135deg, #fff4e5, #ffe8d1);
+  background: linear-gradient(135deg, #f5f9ff, #eef5ff);
   text-align: center;
 }
-.support-title { font-size: 15px; font-weight: 800; color: #8a4b12; }
-.support-sub { font-size: 12px; color: #a8734a; margin-top: 6px; line-height: 1.6; }
+.support-title { font-size: 15px; font-weight: 800; color: #1a5fb4; }
+.support-sub { font-size: 12px; color: #5b8fc7; margin-top: 6px; line-height: 1.6; }
 .support-btn {
   margin-top: 12px;
-  background: #ff7a1a;
+  background: var(--blue-grad);
   color: #fff;
   font-size: 14px;
   font-weight: 700;
   padding: 11px 28px;
   border-radius: 22px;
-  box-shadow: 0 3px 12px rgba(255,122,26,.35);
+  box-shadow: 0 3px 12px rgba(0, 132, 255, .28);
 }
 .support-btn:active { transform: scale(.95); }
 
