@@ -12,7 +12,6 @@ import {
   SCHEDULE_PRESETS,
   buildCheckoutSchedule,
   defaultScheduledAt,
-  formatScheduleSummary,
   fromLocalInputValue,
   isValidScheduleDeliverAt,
   minScheduleLocalValue,
@@ -31,7 +30,7 @@ const ui = useUiStore();
 const payMethod = ref('baole');
 const fromTicketRush = computed(() => route.query.from === 'ticket-rush');
 const fromMovieSeat = computed(() => route.query.from === 'movie-seat');
-const confirmOpen = ref(false);
+const placing = ref(false);
 const deliveryMode = ref<'immediate' | 'scheduled'>('immediate');
 const scheduledLocal = ref(toLocalInputValue(defaultScheduledAt(120)));
 const scheduleMinLocal = ref(minScheduleLocalValue());
@@ -75,10 +74,6 @@ function onScheduleInputChange() {
 
 const isDeliveryCheckout = computed(() => type.value === 'delivery');
 
-const deliveryScheduleSummary = computed(() =>
-  formatScheduleSummary(buildCheckoutSchedule(deliveryMode.value, scheduledLocal.value)),
-);
-
 const type = computed(() => cart.checkoutCartType);
 const nums = computed(() => cart.checkout);
 const addr = computed(() => {
@@ -119,11 +114,13 @@ function requestPlaceOrder() {
     }
     scheduledLocal.value = toLocalInputValue(normalizeScheduleDeliverAt(deliverAt));
   }
-  confirmOpen.value = true;
+  // 本页已是确认订单，不再二次弹窗
+  placeOrder();
 }
 
 function placeOrder() {
-  confirmOpen.value = false;
+  if (placing.value) return;
+  placing.value = true;
   const payMsgs: Record<string, string> = {
     baole: '饱了么支付成功！余额 ∞ 纹丝不动',
     wechat: '微信支付成功！微信：你谁？',
@@ -132,28 +129,33 @@ function placeOrder() {
   ui.toast(payMsgs[payMethod.value] || '支付成功！（当然，一分钱都没扣）');
 
   setTimeout(() => {
-    if (type.value === 'leisure') {
-      const willShareTicket = fromTicketRush.value || fromMovieSeat.value || !!cart.pendingTicketPass;
-      const orderNo = delivery.placeOrder('leisure');
-      if (orderNo) {
-        router.push(willShareTicket
-          ? { path: `/order/${orderNo}`, query: { share: '1' } }
-          : `/order/${orderNo}`);
+    try {
+      if (type.value === 'leisure') {
+        const willShareTicket = fromTicketRush.value || fromMovieSeat.value || !!cart.pendingTicketPass;
+        const orderNo = delivery.placeOrder('leisure');
+        if (orderNo) {
+          router.push(willShareTicket
+            ? { path: `/order/${orderNo}`, query: { share: '1' } }
+            : `/order/${orderNo}`);
+        } else {
+          router.push('/orders');
+        }
+      } else if (type.value === 'mall') {
+        const orderNo = delivery.placeOrder('mall');
+        if (orderNo) router.push(`/mall-shipping/${orderNo}`);
+        else router.push('/orders');
       } else {
-        router.push('/orders');
+        const schedule = isDeliveryCheckout.value
+          ? buildCheckoutSchedule(deliveryMode.value, scheduledLocal.value)
+          : undefined;
+        const orderNo = delivery.placeOrder('delivery', schedule);
+        if (orderNo) router.push(`/tracking/${orderNo}`);
+        else router.push('/orders');
       }
-    } else if (type.value === 'mall') {
-      const orderNo = delivery.placeOrder('mall');
-      if (orderNo) router.push(`/mall-shipping/${orderNo}`);
-      else router.push('/orders');
-    } else {
-      const schedule = isDeliveryCheckout.value
-        ? buildCheckoutSchedule(deliveryMode.value, scheduledLocal.value)
-        : undefined;
-      const orderNo = delivery.placeOrder('delivery', schedule);
-      if (orderNo) router.push(`/tracking/${orderNo}`);
+    } finally {
+      placing.value = false;
     }
-  }, 600);
+  }, 400);
 }
 
 function back() {
@@ -312,23 +314,9 @@ function back() {
 
     <div class="checkout-footer">
       <div class="checkout-footer-total">实付 <b>¥{{ formatMoney(nums.pay) }}</b></div>
-      <button class="pay-btn" @click="requestPlaceOrder">{{ fromTicketRush ? '立即支付出票' : '提交订单' }}</button>
-    </div>
-
-    <div class="modal-mask" :class="{ open: confirmOpen }" @click.self="confirmOpen = false">
-      <div class="modal checkout-confirm-modal">
-        <div class="modal-title">确认提交订单？</div>
-        <div class="checkout-confirm-sub">
-          实付 <b>¥{{ formatMoney(nums.pay) }}</b>，放心，一分钱都不会真扣
-          <template v-if="isDeliveryCheckout">
-            <br>{{ deliveryScheduleSummary }}
-          </template>
-        </div>
-        <div class="checkout-confirm-actions">
-          <button class="checkout-confirm-btn ghost" @click="confirmOpen = false">再想想</button>
-          <button class="checkout-confirm-btn primary" @click="placeOrder">确认提交</button>
-        </div>
-      </div>
+      <button class="pay-btn" :disabled="placing" @click="requestPlaceOrder">
+        {{ fromTicketRush ? '立即支付出票' : (placing ? '提交中…' : '提交订单') }}
+      </button>
     </div>
   </div>
 </template>
