@@ -1,5 +1,5 @@
 import { formatMoney } from '@/core/money';
-import { ORDER_SHARE_CARDS } from '@/core/constants';
+import { ORDER_SHARE_CARDS, SITE_URL } from '@/core/constants';
 import type { Order, ShareCardId } from '@/domain/types';
 import { getInviteCode, getUser } from '@/repositories/userRepo';
 import { analyzeOrders, orderItemCount } from '@/services/orderService';
@@ -7,8 +7,8 @@ import { isCinemaStore } from '@/services/movieSeatService';
 import { resolveTicketPass } from '@/services/ticketRushService';
 
 export function getShareUrl(): string {
-  const base = window.location.href.split('?')[0].split('#')[0];
-  return `${base}?ref=${encodeURIComponent(getInviteCode())}`;
+  const base = SITE_URL.replace(/\/$/, '');
+  return `${base}/?ref=${encodeURIComponent(getInviteCode())}`;
 }
 
 export function getLatestShareableOrder(orders: Order[]) {
