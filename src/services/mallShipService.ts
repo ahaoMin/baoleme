@@ -198,9 +198,9 @@ function formatClock(remainSec: number) {
   return days > 0 ? `${days}天 ${hms}` : hms;
 }
 
-/** 商城下单：测试用 3 分钟送达（正式可改回 1~3 天） */
+/** 商城下单：随机 1~3 天送达 */
 export function randomMallShipDurationMs() {
-  return 3 * 60 * 1000;
+  return (1 + Math.random() * 2) * 24 * 60 * 60 * 1000;
 }
 
 export function getMallShipProgress(entry: MallShipmentEntry | null) {
